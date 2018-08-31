@@ -7,9 +7,10 @@ class Camera():
     def __init__(self):
         self.ret = None
         self.mtx = None
+        self.M = None
+        self.M_inv = None
         
         
-
     def calibrate(self, imgs_path, draw_chessboards=False):
         # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
         objp = np.zeros((6*9,3), np.float32)
@@ -68,5 +69,15 @@ class Camera():
             raise Exception('Camera has not been calibrated.') 
         undist = cv2.undistort(img, self.mtx, self.dist, None, self.mtx)
         return undist
+   
+    def prepare_perspective(self, original_pts, dst_pts):
+        self.M = cv2.getPerspectiveTransform(original_pts, dst_pts)
+        self.M_inv = cv2.getPerspectiveTransform(dst_pts, original_pts)
 
+    def warp(self, img):
+        warped = cv2.warpPerspective(img, self.M, (img.shape[1], img.shape[0]), flags=cv2.INTER_LINEAR)
+        return warped
 
+    def unwarp(self, img):
+        warped = cv2.warpPerspective(img, self.M_inv, (img.shape[1], img.shape[0]), flags=cv2.INTER_LINEAR)
+        return warped
